@@ -50,7 +50,7 @@ def fetch_emails(server, username, password, limit=50):
     return emails
 
 
-def delete_specific_email(server, username, password, email_id, permanent_remove = "False"):
+def delete_specific_email(server, username, password, email_id, permanent_remove = False):
     # Connect to the IMAP server
     mail = imaplib.IMAP4_SSL(server)
     mail.login(username, password)
@@ -59,8 +59,25 @@ def delete_specific_email(server, username, password, email_id, permanent_remove
     # Iterate over each email ID from the list and mark them for deletion
     mail.store(email_id, '+FLAGS', '\\Deleted')  # Marks the email as deleted
 
-    if permanent_remove == "True":
+    if permanent_remove:
         mail.expunge()
     # Logout and close connection
+    mail.logout()
+    return f"Email with ID {email_id} deleted"
+
+def move_to_trash(server, username, password, email_id):
+    mail = imaplib.IMAP4_SSL(server)
+    mail.login(username, password)
+    mail.select('INBOX')
+    # Copy to "Deleted Items" folder
+    result = mail.copy(email_id, 'Deleted Items')
+    # Check if the copy operation was successful
+    if result[0] == 'OK':
+        # Mark the email as deleted in the INBOX to simulate a "move" action
+        mail.store(email_id, '+FLAGS', '\\Deleted')
+        mail.expunge()
+    
+    # Close and logout from the server
+    mail.close()
     mail.logout()
     return f"Email with ID {email_id} deleted"
